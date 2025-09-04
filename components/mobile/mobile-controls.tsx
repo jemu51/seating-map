@@ -4,7 +4,7 @@ import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
 import { Badge } from "@/components/ui/badge"
-import { Menu, X, Zap, Search, Info } from "lucide-react"
+import { Menu, X, Zap, Search, Info, MapPin } from "lucide-react"
 
 interface MobileControlsProps {
   selectedCount: number
@@ -12,6 +12,7 @@ interface MobileControlsProps {
   onOpenSelection: () => void
   onOpenFinder: () => void
   onOpenInfo: () => void
+  onOpenVenueSelector: () => void
 }
 
 export function MobileControls({
@@ -20,6 +21,7 @@ export function MobileControls({
   onOpenSelection,
   onOpenFinder,
   onOpenInfo,
+  onOpenVenueSelector,
 }: MobileControlsProps) {
   const [isOpen, setIsOpen] = useState(false)
 
@@ -38,6 +40,21 @@ export function MobileControls({
               <SheetTitle>Seating Options</SheetTitle>
             </SheetHeader>
             <div className="grid gap-4 py-4">
+              <Button
+                variant="outline"
+                className="h-16 justify-start gap-4 bg-transparent"
+                onClick={() => {
+                  onOpenVenueSelector()
+                  setIsOpen(false)
+                }}
+              >
+                <MapPin className="h-5 w-5" />
+                <div className="text-left">
+                  <div className="font-medium">Select Venue</div>
+                  <div className="text-sm text-muted-foreground">Choose venue size</div>
+                </div>
+              </Button>
+
               <Button
                 variant="outline"
                 className="h-16 justify-start gap-4 bg-transparent"

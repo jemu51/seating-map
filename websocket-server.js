@@ -37,24 +37,41 @@ const wss = new WebSocket.Server({
 // Load actual venue data
 let venueData = null;
 let seatStates = new Map();
+let currentVenueFile = 'venue.json'; // Default to small venue
 
-try {
-  const venuePath = path.join(__dirname, 'public', 'venue.json');
-  const venueFile = fs.readFileSync(venuePath, 'utf8');
-  venueData = JSON.parse(venueFile);
+// Function to load venue data
+function loadVenueData(venueFile) {
+  try {
+    const venuePath = path.join(__dirname, 'public', venueFile);
+    const venueFileContent = fs.readFileSync(venuePath, 'utf8');
+    const newVenueData = JSON.parse(venueFileContent);
 
-  // Initialize seat states from actual venue data
-  venueData.sections.forEach(section => {
-    section.rows.forEach(row => {
-      row.seats.forEach(seat => {
-        seatStates.set(seat.id, seat.status || "available");
+    // Clear existing seat states
+    seatStates.clear();
+
+    // Initialize seat states from new venue data
+    newVenueData.sections.forEach(section => {
+      section.rows.forEach(row => {
+        row.seats.forEach(seat => {
+          seatStates.set(seat.id, seat.status || "available");
+        });
       });
     });
-  });
 
-  logger.info(`Loaded venue: ${venueData.name} with ${seatStates.size} seats`);
-} catch (error) {
-  logger.error('Failed to load venue data:', error);
+    venueData = newVenueData;
+    currentVenueFile = venueFile;
+
+    logger.info(`Loaded venue: ${venueData.name} with ${seatStates.size} seats from ${venueFile}`);
+    return true;
+  } catch (error) {
+    logger.error(`Failed to load venue data from ${venueFile}:`, error);
+    return false;
+  }
+}
+
+// Load default venue
+if (!loadVenueData(currentVenueFile)) {
+  logger.error('Failed to load default venue data');
   process.exit(1);
 }
 
@@ -139,6 +156,50 @@ wss.on('connection', (ws, req) => {
         }));
 
         logger.debug(`Responded to heartbeat from connection ${connectionId}`);
+      } else if (data.type === 'switch_venue') {
+        // Handle venue switching
+        const { venueFile } = data.data;
+
+        if (!venueFile) {
+          logger.warn(`Invalid venue switch request from connection ${connectionId}`, {
+            data: data.data
+          });
+          return;
+        }
+
+        if (loadVenueData(venueFile)) {
+          // Broadcast venue change to all connected clients
+          const venueChangeMessage = JSON.stringify({
+            type: 'venue_changed',
+            data: {
+              venue: venueData,
+              venueFile: currentVenueFile
+            },
+            timestamp: Date.now()
+          });
+
+          // Send to all connected clients
+          clientConnections.forEach((clientWs, clientId) => {
+            try {
+              clientWs.send(venueChangeMessage);
+              logger.debug(`Sent venue change to client ${clientId}`);
+            } catch (error) {
+              logger.error(`Failed to send venue change to client ${clientId}:`, error);
+            }
+          });
+
+          logger.info(`Switched to venue: ${venueData.name} (${currentVenueFile})`);
+        } else {
+          // Send error back to requesting client
+          ws.send(JSON.stringify({
+            type: 'venue_switch_error',
+            data: {
+              error: `Failed to load venue: ${venueFile}`,
+              currentVenue: currentVenueFile
+            },
+            timestamp: Date.now()
+          }));
+        }
       } else if (data.type === 'seat_selection') {
         // Handle seat selection from client
         const { seatId, isSelected, clientId } = data.data;

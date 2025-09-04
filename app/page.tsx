@@ -10,6 +10,7 @@ import { SeatingMap } from "@/components/seating-map/seating-map"
 import { SeatSummaryPanel } from "@/components/seat-summary-panel"
 import { VenueInfoPanel } from "@/components/venue-info-panel"
 import { AdjacentSeatFinder } from "@/components/adjacent-seat-finder"
+import { VenueSelector, venueOptions } from "@/components/venue-selector"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { ConnectionStatus } from "@/components/connection-status"
 import { SkipLinks } from "@/components/accessibility/skip-links"
@@ -21,7 +22,7 @@ import { Switch } from "@/components/ui/switch"
 import { Label } from "@/components/ui/label"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { Loader2, MapPin, Music, Users, Calendar, Clock } from "lucide-react"
+import { Loader2, MapPin, Music, Users, Clock } from "lucide-react"
 import type { AdjacentSeatGroup } from "@/lib/seat-finder"
 
 export default function SeatingMapPage() {
@@ -32,6 +33,8 @@ export default function SeatingMapPage() {
   const [focusedSeat, setFocusedSeat] = useState<SelectedSeat | null>(null)
   const [activeTab, setActiveTab] = useState("selection")
   const [mobileDialogOpen, setMobileDialogOpen] = useState(false)
+  const [selectedVenueId, setSelectedVenueId] = useState("small")
+  const [venueSelectorOpen, setVenueSelectorOpen] = useState(false)
 
   const {
     selection,
@@ -46,15 +49,19 @@ export default function SeatingMapPage() {
 
   const { getSeatStatus, isSeatAnimating, connectionStatus, updateCount } = useWebSocketUpdates(venue)
 
-  const { announcements, prefersReducedMotion, highContrast, announce, announceSelection, announceStatusChange } =
-    useAccessibility()
+  const { announcements, prefersReducedMotion, highContrast, announce, announceSelection } = useAccessibility()
 
   useEffect(() => {
     async function loadData() {
       try {
         setLoading(true)
+        setError(null)
         announce("Loading venue data")
-        const venueData = await loadVenueData()
+
+        const selectedOption = venueOptions.find((option) => option.id === selectedVenueId)
+        const venueFile = selectedOption?.file || "venue.json"
+
+        const venueData = await loadVenueData(venueFile)
         setVenue(venueData)
         announce(`Venue data loaded. ${venueData.name} with ${venueData.sections.length} sections.`)
       } catch (err) {
@@ -67,7 +74,7 @@ export default function SeatingMapPage() {
     }
 
     loadData()
-  }, [announce])
+  }, [announce, selectedVenueId])
 
   const handleSeatClick = (seat: SelectedSeat) => {
     const currentStatus = getSeatStatus(seat.id, seat.status)
@@ -100,6 +107,13 @@ export default function SeatingMapPage() {
     const count = selection.seats.length
     clearSelection()
     announce(`Cleared selection of ${count} seats`)
+  }
+
+  const handleVenueChange = (venueId: string) => {
+    setSelectedVenueId(venueId)
+    // Clear current selection when switching venues
+    clearSelection()
+    announce(`Switching to ${venueOptions.find((option) => option.id === venueId)?.name || "new venue"}`)
   }
 
   const selectedSeatIds = new Set(selection.seats.map((seat) => seat.id))
@@ -176,6 +190,13 @@ export default function SeatingMapPage() {
               </div>
             </div>
             <div className="hidden md:flex items-center gap-4">
+              {/* Venue Selector in Header */}
+              <VenueSelector
+                selectedVenue={selectedVenueId}
+                onVenueChange={handleVenueChange}
+                disabled={loading}
+                compact={true}
+              />
               <ConnectionStatus status={connectionStatus} updateCount={updateCount} />
               <div className="flex items-center space-x-2">
                 <Switch
@@ -206,29 +227,7 @@ export default function SeatingMapPage() {
           <h2 id="platform-intro" className="sr-only">
             Concert Seat Booking Platform Features
           </h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-            <div className="flex items-center gap-2 p-4 bg-card rounded-lg">
-              <Music className="h-5 w-5 text-primary" aria-hidden="true" />
-              <div>
-                <h3 className="font-semibold">Live Concert Events</h3>
-                <p className="text-sm text-muted-foreground">Book tickets for the hottest concerts</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-2 p-4 bg-card rounded-lg">
-              <Users className="h-5 w-5 text-primary" aria-hidden="true" />
-              <div>
-                <h3 className="font-semibold">Group Seating</h3>
-                <p className="text-sm text-muted-foreground">Find adjacent seats for your group</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-2 p-4 bg-card rounded-lg">
-              <Clock className="h-5 w-5 text-primary" aria-hidden="true" />
-              <div>
-                <h3 className="font-semibold">Real-time Updates</h3>
-                <p className="text-sm text-muted-foreground">Live seat availability updates</p>
-              </div>
-            </div>
-          </div>
+          {/* Remove the venue selector section since it's now in the header */}
         </section>
 
         <div className="grid grid-cols-1 xl:grid-cols-5 gap-6">
@@ -365,6 +364,10 @@ export default function SeatingMapPage() {
           setActiveTab("info")
           setMobileDialogOpen(true)
         }}
+        onOpenVenueSelector={() => {
+          setActiveTab("venue")
+          setMobileDialogOpen(true)
+        }}
       />
 
       {/* Mobile dialog */}
@@ -375,9 +378,15 @@ export default function SeatingMapPage() {
               {activeTab === "selection" && "Seat Selection"}
               {activeTab === "finder" && "Find Adjacent Seats"}
               {activeTab === "info" && "Event Information"}
+              {activeTab === "venue" && "Select Venue"}
             </DialogTitle>
           </DialogHeader>
-          <div className="py-4">
+          <div className="py-4 space-y-4">
+            {/* Venue selector for mobile */}
+            <div className="md:hidden">
+              <VenueSelector selectedVenue={selectedVenueId} onVenueChange={handleVenueChange} disabled={loading} />
+            </div>
+
             {activeTab === "selection" && (
               <SeatSummaryPanel
                 selection={selection}
@@ -391,6 +400,31 @@ export default function SeatingMapPage() {
             )}
             {activeTab === "info" && (
               <VenueInfoPanel venue={venue} totalSeats={allSeats.length} availableSeats={availableSeats} />
+            )}
+            {activeTab === "venue" && (
+              <div className="space-y-4">
+                <p className="text-sm text-muted-foreground">
+                  Choose a venue size to view different seating configurations.
+                </p>
+                <div className="space-y-2">
+                  {venueOptions.map((option) => (
+                    <div
+                      key={option.id}
+                      className={`p-4 border rounded-lg cursor-pointer transition-colors ${
+                        selectedVenueId === option.id
+                          ? "border-primary bg-primary/5"
+                          : "border-border hover:bg-muted/50"
+                      }`}
+                      onClick={() => {
+                        handleVenueChange(option.id)
+                        setMobileDialogOpen(false)
+                      }}
+                    >
+                      <div className="font-medium">{option.name}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
             )}
           </div>
         </DialogContent>
@@ -421,11 +455,12 @@ export default function SeatingMapPage() {
             <div>
               <h4 className="font-semibold mb-4">Support</h4>
               <ul className="space-y-2 text-sm text-muted-foreground">
-                <li>Help Center</li>
-                <li>Contact Support</li>
-                <li>Accessibility Guide</li>
-                <li>Terms of Service</li>
-                <li>Privacy Policy</li>
+                <li>
+                  Contact Support:{" "}
+                  <a href="mailto:almansursiddiqui@gmail.com" className="underline hover:text-primary">
+                    almansursiddiqui@gmail.com
+                  </a>
+                </li>
               </ul>
             </div>
           </div>
