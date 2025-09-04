@@ -27,28 +27,43 @@ export default defineConfig({
   /* Configure projects for major browsers */
   projects: [
     {
-      name: "chromium",
+      name: "desktop-chromium",
       use: { ...devices["Desktop Chrome"] },
+      testMatch: /.*\.spec\.ts/,
+      testIgnore: /.*mobile\.spec\.ts/,
     },
 
     {
-      name: "firefox",
+      name: "desktop-firefox",
       use: { ...devices["Desktop Firefox"] },
+      testMatch: /.*\.spec\.ts/,
+      testIgnore: /.*mobile\.spec\.ts/,
     },
 
     {
-      name: "webkit",
+      name: "desktop-webkit",
       use: { ...devices["Desktop Safari"] },
+      testMatch: /.*\.spec\.ts/,
+      testIgnore: /.*mobile\.spec\.ts/,
     },
 
     /* Test against mobile viewports. */
     {
-      name: "Mobile Chrome",
+      name: "mobile-chrome",
       use: { ...devices["Pixel 5"] },
+      testMatch: /.*mobile\.spec\.ts/,
     },
     {
-      name: "Mobile Safari",
+      name: "mobile-safari",
       use: { ...devices["iPhone 12"] },
+      testMatch: /.*mobile\.spec\.ts/,
+    },
+
+    /* Cross-platform tests that run on all devices */
+    {
+      name: "accessibility",
+      use: { ...devices["Desktop Chrome"] },
+      testMatch: /.*accessibility\.spec\.ts/,
     },
   ],
 
