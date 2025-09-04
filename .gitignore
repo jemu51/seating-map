@@ -7,6 +7,9 @@
 /.next/
 /out/
 
+# swc
+.swc/
+
 # production
 /build
 
@@ -25,3 +28,81 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# testing
+/test-results/
+/coverage/
+/playwright-report/
+*.lcov
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# logs
+*.log
+logs/
+
+# runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# optional npm cache directory
+.npm
+
+# optional eslint cache
+.eslintcache
+
+# microbundle cache
+.rpt2_cache/
+.rts2_cache_cjs/
+.rts2_cache_es/
+.rts2_cache_umd/
+
+# optional REPL history
+.node_repl_history
+
+# output of 'npm pack'
+*.tgz
+
+# Yarn Integrity file
+.yarn-integrity
+
+# parcel-bundler cache (https://parceljs.org/)
+.cache
+.parcel-cache
+
+# next.js build output
+.next
+
+# nuxt.js build output
+.nuxt
+
+# vuepress build output
+.vuepress/dist
+
+# Serverless directories
+.serverless/
+
+# FuseBox cache
+.fusebox/
+
+# DynamoDB Local files
+.dynamodb/
+
+# TernJS port file
+.tern-port
