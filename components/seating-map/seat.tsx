@@ -21,7 +21,7 @@ interface SeatProps {
   onSeatKeyDown: (seat: Seat, sectionId: string, rowIndex: number, key: string) => void
 }
 
-const SEAT_SIZE = 12
+const SEAT_SIZE = 10 // Reduce from 12 to 10 for better spacing
 const SEAT_RADIUS = 2
 
 function getSeatColor(
@@ -140,10 +140,10 @@ export const SeatComponent = React.memo(function SeatComponent({
               ? "#FFFFFF"
               : "#1d4ed8"
             : isFocused
-              ? highContrast
-                ? "#FFFFFF"
-                : "#6366f1"
-              : "transparent"
+            ? highContrast
+              ? "#FFFFFF"
+              : "#6366f1"
+            : "transparent"
         }
         strokeWidth={isSelected ? (highContrast ? 3 : 2) : isFocused ? (highContrast ? 2 : 1) : 0}
         className={cn(
@@ -158,7 +158,11 @@ export const SeatComponent = React.memo(function SeatComponent({
         onFocus={handleFocus}
         tabIndex={isInteractive ? 0 : -1}
         role="button"
-        aria-label={`Seat ${seat.id} in section ${sectionId} row ${rowIndex}, ${effectiveStatus}, price tier ${seat.priceTier}${isSelected ? ", currently selected" : ""}${isFocused ? ", focused" : ""}${isAnimating ? ", status updating" : ""}`}
+        aria-label={`Seat ${seat.id} in section ${sectionId} row ${rowIndex}, ${effectiveStatus}, price tier ${
+          seat.priceTier
+        }${isSelected ? ", currently selected" : ""}${isFocused ? ", focused" : ""}${
+          isAnimating ? ", status updating" : ""
+        }`}
         aria-pressed={isSelected}
         aria-describedby={`seat-${seat.id}-description`}
         data-seat-id={seat.id}

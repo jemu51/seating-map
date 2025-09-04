@@ -103,11 +103,22 @@ export function SeatingMap({
   }
 
   // Zoom functionality
-  const handleWheel = useCallback((e: React.WheelEvent) => {
+  const handleWheel = useCallback((e: WheelEvent) => {
     e.preventDefault()
     const delta = e.deltaY > 0 ? 0.9 : 1.1
     setScale((prev) => Math.max(0.5, Math.min(5, prev * delta)))
   }, [])
+
+  // Add wheel event listener manually to avoid passive listener issues
+  useEffect(() => {
+    const svgElement = svgRef.current
+    if (svgElement) {
+      svgElement.addEventListener("wheel", handleWheel, { passive: false })
+      return () => {
+        svgElement.removeEventListener("wheel", handleWheel)
+      }
+    }
+  }, [handleWheel])
 
   // Pan functionality
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
@@ -228,7 +239,6 @@ export function SeatingMap({
         ref={svgRef}
         className="w-full h-full cursor-grab active:cursor-grabbing focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
         viewBox={viewBox}
-        onWheel={handleWheel}
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}

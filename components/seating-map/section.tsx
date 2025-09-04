@@ -33,10 +33,23 @@ export const SectionComponent = React.memo(function SectionComponent({
   onSeatFocus,
   onSeatKeyDown,
 }: SectionProps) {
+  // Calculate section dimensions for proper label positioning
+  const maxRow = Math.max(...section.rows.map((row) => row.seats.length))
+  const sectionWidth = maxRow * 35 // 35px spacing between seats
+  const sectionHeight = section.rows.length * 35
+  const labelX = sectionWidth / 2
+  const labelY = -10 // Position above the section
+
   return (
     <g transform={`translate(${section.transform.x}, ${section.transform.y}) scale(${section.transform.scale})`}>
-      {/* Section label */}
-      <text x={100} y={20} textAnchor="middle" className="fill-foreground text-sm font-medium" pointerEvents="none">
+      {/* Section label - positioned at center of section */}
+      <text
+        x={labelX}
+        y={labelY}
+        textAnchor="middle"
+        className="fill-foreground text-sm font-medium"
+        pointerEvents="none"
+      >
         {section.label}
       </text>
 

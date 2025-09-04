@@ -6,89 +6,179 @@ export interface SeatStatusUpdate {
   seatId: string
   status: SeatStatus
   timestamp: number
+  source?: string
 }
 
 export interface WebSocketMessage {
-  type: "seat_update" | "bulk_update" | "heartbeat"
-  data: SeatStatusUpdate | SeatStatusUpdate[] | null
+  type: "seat_update" | "bulk_update" | "heartbeat" | "error" | "seat_selection"
+  data: SeatStatusUpdate | SeatStatusUpdate[] | string | { seatId: string; isSelected: boolean; clientId: string } | null
 }
 
 class WebSocketService {
+  private static instance: WebSocketService
   private ws: WebSocket | null = null
   private reconnectAttempts = 0
   private maxReconnectAttempts = 5
   private reconnectDelay = 1000
+  private maxReconnectDelay = 30000
   private listeners: ((message: WebSocketMessage) => void)[] = []
   private isConnecting = false
+  private heartbeatInterval: NodeJS.Timeout | null = null
+  private heartbeatTimeoutInterval: NodeJS.Timeout | null = null
+  private reconnectTimeout: NodeJS.Timeout | null = null
+  private lastHeartbeat = 0
+  private heartbeatTimeout = 30000 // 30 seconds
+  private url: string
+  private clientId: string
+  private connectionCount = 0
+  private isDisconnecting = false
+
+  static getInstance(): WebSocketService {
+    if (!WebSocketService.instance) {
+      WebSocketService.instance = new WebSocketService()
+    }
+    return WebSocketService.instance
+  }
+
+  constructor() {
+    // Use environment variable or default to a WebSocket server
+    this.url = process.env.NEXT_PUBLIC_WEBSOCKET_URL || "ws://localhost:8080"
+    // Generate unique client ID
+    this.clientId = `client_${Math.random().toString(36).substr(2, 9)}`
+  }
 
   connect(url?: string) {
-    if (this.ws?.readyState === WebSocket.OPEN || this.isConnecting) {
+    // Prevent multiple simultaneous connection attempts
+    if (this.isConnecting || this.isDisconnecting) {
+      console.log(`[WebSocket] Connection attempt blocked - already connecting or disconnecting`)
       return
     }
 
-    this.isConnecting = true
+    this.connectionCount++
+    console.log(`[WebSocket] Connect called. Count: ${this.connectionCount}`)
 
-    // Use mock WebSocket for demo purposes
-    this.connectMockWebSocket()
+    // If already connected, just return
+    if (this.ws?.readyState === WebSocket.OPEN) {
+      console.log(`[WebSocket] Already connected (${this.connectionCount} connections)`)
+      return
+    }
+
+    if (url) {
+      this.url = url
+    }
+
+    this.isConnecting = true
+    this.isDisconnecting = false
+    console.log(`[WebSocket] Connecting to ${this.url}... (${this.connectionCount} connections)`)
+
+    try {
+      this.ws = new WebSocket(this.url)
+      this.setupEventHandlers()
+    } catch (error) {
+      console.error("[WebSocket] Failed to create WebSocket connection:", error)
+      this.isConnecting = false
+      this.handleConnectionError()
+    }
   }
 
-  private connectMockWebSocket() {
-    // Simulate WebSocket connection with periodic updates
-    console.log("[WebSocket] Connecting to mock server...")
+  private setupEventHandlers() {
+    if (!this.ws) return
 
-    // Simulate connection delay
-    setTimeout(() => {
+    this.ws.onopen = () => {
+      console.log("[WebSocket] Connected successfully")
       this.isConnecting = false
       this.reconnectAttempts = 0
-      console.log("[WebSocket] Connected to mock server")
+      this.notifyListeners({
+        type: "heartbeat",
+        data: "connected"
+      })
+    }
 
-      // Start sending mock updates
-      this.startMockUpdates()
-    }, 1000)
+    this.ws.onmessage = (event) => {
+      try {
+        const message = JSON.parse(event.data) as WebSocketMessage
+        this.handleMessage(message)
+      } catch (error) {
+        console.error("[WebSocket] Failed to parse message:", error)
+        this.notifyListeners({
+          type: "error",
+          data: "Failed to parse message"
+        })
+      }
+    }
+
+    this.ws.onclose = (event) => {
+      console.log(`[WebSocket] Connection closed. Code: ${event.code}`)
+      this.cleanup()
+
+      // Only reconnect if it wasn't a manual disconnect and we haven't exceeded max attempts
+      if (event.code !== 1000 && this.reconnectAttempts < this.maxReconnectAttempts) {
+        this.scheduleReconnect()
+      }
+    }
+
+    this.ws.onerror = (error) => {
+      console.error("[WebSocket] Connection error:", error)
+      this.handleConnectionError()
+    }
   }
 
-  private startMockUpdates() {
-    // Send periodic seat status updates to simulate real-time changes
-    const sendRandomUpdate = () => {
-      const seatIds = ["A-1-01", "A-1-02", "A-1-03", "A-2-01", "A-2-02", "B-1-01", "B-1-02"]
-      const statuses: SeatStatus[] = ["available", "reserved", "sold", "held"]
+  private handleMessage(message: WebSocketMessage) {
+    switch (message.type) {
+      case "heartbeat":
+        this.lastHeartbeat = Date.now()
+        break
+      case "seat_update":
+      case "bulk_update":
+        this.notifyListeners(message)
+        break
+      case "error":
+        console.error("[WebSocket] Server error:", message.data)
+        this.notifyListeners(message)
+        break
+      default:
+        console.warn("[WebSocket] Unknown message type:", message.type)
+    }
+  }
 
-      const randomSeatId = seatIds[Math.floor(Math.random() * seatIds.length)]
-      const randomStatus = statuses[Math.floor(Math.random() * statuses.length)]
-
-      const update: SeatStatusUpdate = {
-        seatId: randomSeatId,
-        status: randomStatus,
-        timestamp: Date.now(),
-      }
-
-      const message: WebSocketMessage = {
-        type: "seat_update",
-        data: update,
-      }
-
-      this.notifyListeners(message)
+  private scheduleReconnect() {
+    if (this.reconnectTimeout) {
+      clearTimeout(this.reconnectTimeout)
     }
 
-    // Send updates every 3-8 seconds
-    const scheduleNextUpdate = () => {
-      const delay = 3000 + Math.random() * 5000
-      setTimeout(() => {
-        sendRandomUpdate()
-        scheduleNextUpdate()
-      }, delay)
+    const delay = Math.min(
+      this.reconnectDelay * Math.pow(2, this.reconnectAttempts),
+      this.maxReconnectDelay
+    )
+
+    console.log(`[WebSocket] Reconnecting in ${delay}ms (attempt ${this.reconnectAttempts + 1}/${this.maxReconnectAttempts})`)
+
+    this.reconnectTimeout = setTimeout(() => {
+      this.reconnectAttempts++
+      this.connect()
+    }, delay)
+  }
+
+  private handleConnectionError() {
+    this.isConnecting = false
+    this.notifyListeners({
+      type: "error",
+      data: "Connection failed"
+    })
+
+    if (this.reconnectAttempts < this.maxReconnectAttempts) {
+      this.scheduleReconnect()
     }
+  }
 
-    scheduleNextUpdate()
-
-    // Send heartbeat every 30 seconds
-    setInterval(() => {
-      const heartbeat: WebSocketMessage = {
-        type: "heartbeat",
-        data: null,
-      }
-      this.notifyListeners(heartbeat)
-    }, 30000)
+  private cleanup() {
+    if (this.reconnectTimeout) {
+      clearTimeout(this.reconnectTimeout)
+      this.reconnectTimeout = null
+    }
+    this.ws = null
+    this.isConnecting = false
+    this.isDisconnecting = false
   }
 
   private notifyListeners(message: WebSocketMessage) {
@@ -110,20 +200,54 @@ class WebSocketService {
   }
 
   disconnect() {
-    if (this.ws) {
-      this.ws.close()
-      this.ws = null
+    this.connectionCount = Math.max(0, this.connectionCount - 1)
+    console.log(`[WebSocket] Disconnect requested (${this.connectionCount} connections remaining)`)
+
+    // Only actually disconnect if no more components are using the connection
+    if (this.connectionCount <= 0) {
+      this.isDisconnecting = true
+      this.cleanup()
+      this.listeners = []
+      console.log("[WebSocket] Fully disconnected")
     }
-    this.listeners = []
-    this.isConnecting = false
-    console.log("[WebSocket] Disconnected")
   }
 
-  getConnectionState() {
+  getConnectionState(): "connecting" | "connected" | "disconnected" {
     if (this.isConnecting) return "connecting"
-    if (this.listeners.length > 0) return "connected"
+    if (this.ws?.readyState === WebSocket.OPEN) return "connected"
     return "disconnected"
+  }
+
+  // Method to send messages to the server
+  send(message: WebSocketMessage) {
+    if (this.ws?.readyState === WebSocket.OPEN) {
+      this.ws.send(JSON.stringify(message))
+    } else {
+      console.warn("[WebSocket] Cannot send message, connection not open")
+    }
+  }
+
+  // Method to send seat selection updates
+  sendSeatSelection(seatId: string, isSelected: boolean) {
+    this.send({
+      type: "seat_selection",
+      data: {
+        seatId,
+        isSelected,
+        clientId: this.clientId
+      }
+    })
+  }
+
+  // Method to get connection URL
+  getUrl(): string {
+    return this.url
+  }
+
+  // Method to update connection URL
+  setUrl(url: string) {
+    this.url = url
   }
 }
 
-export const websocketService = new WebSocketService()
+export const websocketService = WebSocketService.getInstance()

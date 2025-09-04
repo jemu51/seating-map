@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react"
 import type { SelectedSeat, SeatSelection } from "@/types/venue"
 import { getPriceForTier } from "@/lib/venue-data"
+import { websocketService } from "@/lib/websocket-service"
 
 const STORAGE_KEY = "seating-map-selection"
 const MAX_SEATS = 8
@@ -17,22 +18,31 @@ export function useSeatSelection() {
   // Load from localStorage on mount
   useEffect(() => {
     try {
-      const saved = localStorage.getItem(STORAGE_KEY)
-      if (saved) {
-        const parsed = JSON.parse(saved)
-        setSelection(parsed)
+      const savedSelection = localStorage.getItem(STORAGE_KEY)
+      if (savedSelection) {
+        const parsedSelection: SeatSelection = JSON.parse(savedSelection)
+        // Validate the parsed data structure
+        if (parsedSelection.seats && Array.isArray(parsedSelection.seats)) {
+          setSelection(parsedSelection)
+        }
       }
     } catch (error) {
-      console.error("Error loading saved selection:", error)
+      console.warn("Failed to load seat selection from localStorage:", error)
+      // Clear corrupted data
+      localStorage.removeItem(STORAGE_KEY)
     }
   }, [])
 
   // Save to localStorage whenever selection changes
   useEffect(() => {
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(selection))
+      if (selection.seats.length > 0) {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(selection))
+      } else {
+        localStorage.removeItem(STORAGE_KEY)
+      }
     } catch (error) {
-      console.error("Error saving selection:", error)
+      console.warn("Failed to save seat selection to localStorage:", error)
     }
   }, [selection])
 
@@ -44,6 +54,10 @@ export function useSeatSelection() {
         // Remove seat
         const newSeats = prev.seats.filter((s) => s.id !== seat.id)
         setRecentlySelected((recent) => recent.filter((id) => id !== seat.id))
+
+        // Send WebSocket message
+        websocketService.sendSeatSelection(seat.id, false)
+
         return {
           seats: newSeats,
           subtotal: newSeats.reduce((sum, s) => sum + getPriceForTier(s.priceTier), 0),
@@ -56,6 +70,10 @@ export function useSeatSelection() {
 
         const newSeats = [...prev.seats, seat]
         setRecentlySelected((recent) => [...recent.slice(-2), seat.id])
+
+        // Send WebSocket message
+        websocketService.sendSeatSelection(seat.id, true)
+
         return {
           seats: newSeats,
           subtotal: newSeats.reduce((sum, s) => sum + getPriceForTier(s.priceTier), 0),
@@ -87,6 +105,8 @@ export function useSeatSelection() {
   const clearSelection = useCallback(() => {
     setSelection({ seats: [], subtotal: 0 })
     setRecentlySelected([])
+    // Clear from localStorage
+    localStorage.removeItem(STORAGE_KEY)
   }, [])
 
   const isSeatSelected = useCallback(

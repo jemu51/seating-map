@@ -8,6 +8,7 @@ export function useWebSocketUpdates(venue: Venue | null) {
   const [seatUpdates, setSeatUpdates] = useState<Map<string, SeatStatus>>(new Map())
   const [animatingSeats, setAnimatingSeats] = useState<Set<string>>(new Set())
   const [connectionStatus, setConnectionStatus] = useState<"connecting" | "connected" | "disconnected">("disconnected")
+  const [error, setError] = useState<string | null>(null)
 
   const handleSeatUpdate = useCallback((update: SeatStatusUpdate) => {
     console.log("[WebSocket] Seat update:", update)
@@ -28,21 +29,27 @@ export function useWebSocketUpdates(venue: Venue | null) {
     }, 1000) // Match CSS animation duration
   }, [])
 
+  // Create a stable reference to the message handler
   const handleWebSocketMessage = useCallback(
     (message: WebSocketMessage) => {
       switch (message.type) {
         case "seat_update":
           if (message.data && !Array.isArray(message.data)) {
-            handleSeatUpdate(message.data)
+            handleSeatUpdate(message.data as SeatStatusUpdate)
           }
           break
         case "bulk_update":
           if (message.data && Array.isArray(message.data)) {
-            message.data.forEach(handleSeatUpdate)
+            (message.data as SeatStatusUpdate[]).forEach(handleSeatUpdate)
           }
           break
         case "heartbeat":
           console.log("[WebSocket] Heartbeat received")
+          setError(null) // Clear any previous errors on successful heartbeat
+          break
+        case "error":
+          console.error("[WebSocket] Error:", message.data)
+          setError(message.data as string)
           break
       }
     },
@@ -54,6 +61,7 @@ export function useWebSocketUpdates(venue: Venue | null) {
 
     console.log("[WebSocket] Starting connection...")
     setConnectionStatus("connecting")
+    setError(null)
 
     const unsubscribe = websocketService.subscribe(handleWebSocketMessage)
     websocketService.connect()
@@ -71,7 +79,7 @@ export function useWebSocketUpdates(venue: Venue | null) {
       websocketService.disconnect()
       setConnectionStatus("disconnected")
     }
-  }, [venue, handleWebSocketMessage])
+  }, [venue, handleWebSocketMessage]) // Include handleWebSocketMessage to prevent stale closures
 
   const getSeatStatus = useCallback(
     (seatId: string, originalStatus: SeatStatus): SeatStatus => {
@@ -92,5 +100,6 @@ export function useWebSocketUpdates(venue: Venue | null) {
     isSeatAnimating,
     connectionStatus,
     updateCount: seatUpdates.size,
+    error,
   }
 }

@@ -21,7 +21,7 @@ import { Switch } from "@/components/ui/switch"
 import { Label } from "@/components/ui/label"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { Loader2, MapPin } from "lucide-react"
+import { Loader2, MapPin, Music, Users, Calendar, Clock } from "lucide-react"
 import type { AdjacentSeatGroup } from "@/lib/seat-finder"
 
 export default function SeatingMapPage() {
@@ -149,12 +149,31 @@ export default function SeatingMapPage() {
       <SkipLinks />
       <LiveRegion message={announcements} />
 
-      <header className="border-b bg-card/50 backdrop-blur-sm sticky top-0 z-50">
+      {/* SEO-friendly header with structured data */}
+      <header
+        className="border-b bg-card/50 backdrop-blur-sm sticky top-0 z-50"
+        itemScope
+        itemType="https://schema.org/Event"
+      >
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-bold text-balance">{venue.name}</h1>
+              <h1 className="text-2xl font-bold text-balance" itemProp="name">
+                {venue.name}
+              </h1>
               <p className="text-muted-foreground">Interactive Seating Map</p>
+
+              {/* Hidden structured data for SEO */}
+              <div className="sr-only" itemProp="description">
+                Book concert tickets with our interactive seating map platform. Real-time seat availability, adjacent
+                seat finder, and seamless ticket selection experience for concerts and live events.
+              </div>
+              <div className="sr-only" itemProp="eventStatus">
+                https://schema.org/EventScheduled
+              </div>
+              <div className="sr-only" itemProp="eventAttendanceMode">
+                https://schema.org/OfflineEventAttendanceMode
+              </div>
             </div>
             <div className="hidden md:flex items-center gap-4">
               <ConnectionStatus status={connectionStatus} updateCount={updateCount} />
@@ -180,10 +199,41 @@ export default function SeatingMapPage() {
         </div>
       </header>
 
+      {/* Main content with semantic HTML */}
       <main id="main-content" className="container mx-auto px-4 py-6">
+        {/* SEO-friendly introduction section */}
+        <section className="mb-8" aria-labelledby="platform-intro">
+          <h2 id="platform-intro" className="sr-only">
+            Concert Seat Booking Platform Features
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+            <div className="flex items-center gap-2 p-4 bg-card rounded-lg">
+              <Music className="h-5 w-5 text-primary" aria-hidden="true" />
+              <div>
+                <h3 className="font-semibold">Live Concert Events</h3>
+                <p className="text-sm text-muted-foreground">Book tickets for the hottest concerts</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 p-4 bg-card rounded-lg">
+              <Users className="h-5 w-5 text-primary" aria-hidden="true" />
+              <div>
+                <h3 className="font-semibold">Group Seating</h3>
+                <p className="text-sm text-muted-foreground">Find adjacent seats for your group</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 p-4 bg-card rounded-lg">
+              <Clock className="h-5 w-5 text-primary" aria-hidden="true" />
+              <div>
+                <h3 className="font-semibold">Real-time Updates</h3>
+                <p className="text-sm text-muted-foreground">Live seat availability updates</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
         <div className="grid grid-cols-1 xl:grid-cols-5 gap-6">
           {/* Main seating map */}
-          <div className="xl:col-span-3">
+          <section className="xl:col-span-3" aria-labelledby="seating-map-title">
             <Card className="overflow-hidden">
               <CardContent className="p-0">
                 <div id="seating-map" role="application" aria-label="Interactive seating map">
@@ -202,10 +252,10 @@ export default function SeatingMapPage() {
                 </div>
               </CardContent>
             </Card>
-          </div>
+          </section>
 
           {/* Desktop sidebar */}
-          <div className="hidden xl:block xl:col-span-2 space-y-6">
+          <aside className="hidden xl:block xl:col-span-2 space-y-6" aria-label="Seat selection and venue information">
             <div id="seat-selection">
               <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
                 <TabsList className="grid w-full grid-cols-3">
@@ -295,7 +345,7 @@ export default function SeatingMapPage() {
                 </TabsContent>
               </Tabs>
             </div>
-          </div>
+          </aside>
         </div>
       </main>
 
@@ -345,6 +395,45 @@ export default function SeatingMapPage() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* SEO-friendly footer */}
+      <footer className="border-t bg-card/50 backdrop-blur-sm mt-12">
+        <div className="container mx-auto px-4 py-8">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div>
+              <h3 className="font-semibold mb-4">Concert Seat Booking Platform</h3>
+              <p className="text-sm text-muted-foreground">
+                The ultimate platform for booking concert tickets with interactive seating maps, real-time availability,
+                and seamless ticket selection experience.
+              </p>
+            </div>
+            <div>
+              <h4 className="font-semibold mb-4">Features</h4>
+              <ul className="space-y-2 text-sm text-muted-foreground">
+                <li>Interactive Seating Maps</li>
+                <li>Real-time Seat Availability</li>
+                <li>Adjacent Seat Finder</li>
+                <li>Mobile Responsive Design</li>
+                <li>Accessibility Features</li>
+                <li>Live Updates</li>
+              </ul>
+            </div>
+            <div>
+              <h4 className="font-semibold mb-4">Support</h4>
+              <ul className="space-y-2 text-sm text-muted-foreground">
+                <li>Help Center</li>
+                <li>Contact Support</li>
+                <li>Accessibility Guide</li>
+                <li>Terms of Service</li>
+                <li>Privacy Policy</li>
+              </ul>
+            </div>
+          </div>
+          <div className="border-t mt-8 pt-8 text-center text-sm text-muted-foreground">
+            <p>&copy; 2024 Concert Seat Booking Platform. All rights reserved.</p>
+          </div>
+        </div>
+      </footer>
     </div>
   )
 }
