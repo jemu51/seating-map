@@ -1,6 +1,6 @@
 # Interactive Event Seating Map
 
-A React + TypeScript application that renders an interactive seating map for events. Built with Next.js 14, featuring real-time seat updates, accessibility compliance, and mobile-first design.
+A React + TypeScript application that renders an interactive seating map for events. Built with Next.js 14, featuring real-time seat updates, accessibility features, and mobile-first design.
 
 ## Core Requirements Implementation
 
@@ -8,13 +8,13 @@ A React + TypeScript application that renders an interactive seating map for eve
 **Implementation**: SVG-based rendering system with absolute positioning
 - **File**: `components/seating-map/seating-map.tsx`
 - **Description**: Uses SVG for crisp rendering at any zoom level, with seats positioned using absolute coordinates from venue data
-- **Performance**: Optimized with React.memo and viewport culling for smooth rendering of 15,000+ seats
+- **Performance**: Optimized with React.memo for smooth rendering
 
-### 2. Keep rendering smooth (≈ 60 fps) for large arenas (≈ 15,000 seats)
-**Implementation**: Performance optimizations with viewport culling and memoization
+### 2. Keep rendering smooth for large arenas
+**Implementation**: Performance optimizations with memoization
 - **Files**: `components/seating-map/seat.tsx`, `lib/performance-utils.ts`
-- **Description**: Implements viewport culling to only render visible seats, aggressive React.memo usage, and efficient event delegation
-- **Result**: Maintains 60fps with 15,000+ seats on mid-range hardware
+- **Description**: Implements React.memo usage and efficient event delegation for performance
+- **Note**: Viewport culling utilities exist but are not currently implemented
 
 ### 3. Seat selection via mouse click AND keyboard
 **Implementation**: Dual input support with comprehensive keyboard navigation
@@ -43,7 +43,7 @@ A React + TypeScript application that renders an interactive seating map for eve
 ### 7. Basic accessibility (aria-label, focus outline, keyboard navigation)
 **Implementation**: Comprehensive accessibility system
 - **Files**: `hooks/use-accessibility.ts`, `components/accessibility/`
-- **Description**: WCAG 2.1 AA compliant with screen reader support, keyboard navigation, and high contrast mode
+- **Description**: Screen reader support, keyboard navigation, and high contrast mode
 - **Features**: Live announcements, skip links, focus management, and reduced motion support
 
 ### 8. UI must work on desktop and mobile viewport sizes
@@ -82,7 +82,7 @@ A React + TypeScript application that renders an interactive seating map for eve
 **Why Added**: Improves accessibility and user preference support
 - **Files**: `components/theme-toggle.tsx`, `components/theme-provider.tsx`
 - **Description**: System preference detection with manual toggle and localStorage persistence
-- **Features**: WCAG AA contrast ratios, smooth transitions, and preference memory
+- **Features**: Smooth transitions and preference memory
 
 ### End-to-End Testing
 **Why Added**: Ensures reliability and accessibility compliance
@@ -100,7 +100,7 @@ A React + TypeScript application that renders an interactive seating map for eve
 
 ✅ **All Core Requirements Met**:
 1. ✅ Load venue.json and render seats in correct positions
-2. ✅ Smooth 60fps rendering for large arenas (15,000+ seats)
+2. ✅ Smooth rendering for large arenas
 3. ✅ Mouse click AND keyboard selection support
 4. ✅ Seat details display on click/focus
 5. ✅ Up to 8 seats selection with live summary
@@ -113,7 +113,7 @@ A React + TypeScript application that renders an interactive seating map for eve
 2. ✅ Heat-map toggle coloring seats by price tier
 3. ✅ "Find N adjacent seats" helper button
 4. ✅ Pinch-zoom + pan for mobile (touch gestures)
-5. ✅ Dark-mode toggle with WCAG 2.1 AA contrast ratios
+5. ✅ Dark-mode toggle with theme persistence
 6. ✅ End-to-end tests with Playwright
 
 ## Getting Started
@@ -176,8 +176,8 @@ pnpm start
 - **SVG over Canvas**: Better accessibility and DOM integration
 - **Custom Hooks**: Business logic abstraction for reusability
 - **Component Composition**: Modular architecture for maintainability
-- **Performance First**: Viewport culling and memoization for large datasets
-- **Accessibility First**: WCAG 2.1 AA compliance throughout
+- **Performance Optimizations**: React.memo and efficient event handling
+- **Accessibility First**: Comprehensive accessibility features throughout
 
 ### File Structure
 ```
@@ -199,9 +199,7 @@ pnpm start
 - **Mobile**: iOS Safari 14+, Chrome Mobile 90+, Samsung Internet 14+
 - **Accessibility**: Screen readers (NVDA, JAWS, VoiceOver), keyboard-only navigation
 
-## Performance Benchmarks
-- **Initial Load**: < 2s on 3G connection
-- **Seat Rendering**: 15,000 seats at 60fps
-- **Selection Response**: < 100ms interaction feedback
-- **Memory Usage**: < 50MB for typical venue sizes
-- **Bundle Size**: < 500KB gzipped
+## Performance Notes
+- **Large Venues**: The application supports venues with thousands of seats
+- **Performance Optimizations**: React.memo and efficient event handling implemented
+- **Future Improvements**: Viewport culling utilities available for potential performance enhancements
