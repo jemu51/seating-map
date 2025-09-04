@@ -1,6 +1,6 @@
 # Interactive Event Seating Map
 
-A React + TypeScript application that renders an interactive seating map for events. Built with Next.js 14, featuring real-time seat updates, accessibility features, and mobile-first design.
+A React + TypeScript application that renders an interactive seating map for events. Built with Next.js 15, featuring real-time seat updates, accessibility compliance, and mobile-first design.
 
 ## Core Requirements Implementation
 
@@ -24,7 +24,7 @@ A React + TypeScript application that renders an interactive seating map for eve
 
 ### 4. Display seat details on click or focus
 **Implementation**: Real-time seat information panel
-- **File**: `app/page.tsx` (lines 217-279)
+- **File**: `app/page.tsx` (seat details panel in desktop sidebar)
 - **Description**: Shows section, row, seat number, price, status, and tier information
 - **Features**: Live status updates, price calculation, and selection state
 
@@ -36,7 +36,7 @@ A React + TypeScript application that renders an interactive seating map for eve
 
 ### 6. Persist selection after page reload (localStorage)
 **Implementation**: Automatic persistence with error handling
-- **File**: `hooks/use-seat-selection.ts` (lines 18-47)
+- **File**: `hooks/use-seat-selection.ts` (localStorage implementation)
 - **Description**: Saves selection to localStorage on every change, loads on mount with validation
 - **Features**: Graceful error handling for corrupted data, automatic cleanup
 
@@ -62,7 +62,7 @@ A React + TypeScript application that renders an interactive seating map for eve
 
 ### Heat Map Toggle
 **Why Added**: Helps users visualize price distribution across the venue
-- **File**: `app/page.tsx` (lines 162-173)
+- **File**: `app/page.tsx` (heat map toggle in header)
 - **Description**: Toggle between seat status view and price tier heat map
 - **Features**: Color-coded legend, smooth transitions, and accessibility support
 
@@ -74,7 +74,7 @@ A React + TypeScript application that renders an interactive seating map for eve
 
 ### Pinch-zoom and Pan for Mobile
 **Why Added**: Essential for mobile usability with large seating maps
-- **File**: `components/seating-map/seating-map.tsx` (lines 150-191)
+- **File**: `components/seating-map/seating-map.tsx` (touch gesture handlers)
 - **Description**: Touch gesture support for zoom and pan operations
 - **Features**: Two-finger pinch zoom, single-finger pan, and gesture recognition
 
@@ -119,7 +119,7 @@ A React + TypeScript application that renders an interactive seating map for eve
 ## Getting Started
 
 ### Prerequisites
-- Node.js 18+ 
+- Node.js 22+ 
 - pnpm (recommended) or npm
 
 ### Installation & Development
@@ -166,9 +166,9 @@ pnpm start
 ## Technical Architecture
 
 ### Core Technologies
-- **Next.js 14** with App Router for modern React features
-- **TypeScript** with strict mode enabled
-- **Tailwind CSS** for styling and responsive design
+- **Next.js 15** with App Router for modern React features
+- **React 19** with TypeScript 5 and strict mode enabled
+- **Tailwind CSS 4** for styling and responsive design
 - **Radix UI** for accessible component primitives
 - **WebSocket** for real-time updates
 
@@ -195,8 +195,8 @@ pnpm start
 ```
 
 ## Browser Support
-- **Desktop**: Chrome 90+, Firefox 88+, Safari 14+, Edge 90+
-- **Mobile**: iOS Safari 14+, Chrome Mobile 90+, Samsung Internet 14+
+- **Desktop**: Chrome 120+, Firefox 120+, Safari 17+, Edge 120+
+- **Mobile**: iOS Safari 17+, Chrome Mobile 120+, Samsung Internet 120+
 - **Accessibility**: Screen readers (NVDA, JAWS, VoiceOver), keyboard-only navigation
 
 ## Performance Notes
