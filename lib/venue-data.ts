@@ -1,14 +1,14 @@
 import type { Venue } from "@/types/venue"
 
-export async function loadVenueData(): Promise<Venue> {
+export async function loadVenueData(venueFile: string = "venue.json"): Promise<Venue> {
   try {
-    const response = await fetch("/venue.json")
+    const response = await fetch(`/${venueFile}`)
     if (!response.ok) {
-      throw new Error("Failed to load venue data")
+      throw new Error(`Failed to load venue data from ${venueFile}`)
     }
     return await response.json()
   } catch (error) {
-    console.error("Error loading venue data:", error)
+    console.error(`Error loading venue data from ${venueFile}:`, error)
     throw error
   }
 }

@@ -36,7 +36,6 @@ export const SectionComponent = React.memo(function SectionComponent({
   // Calculate section dimensions for proper label positioning
   const maxRow = Math.max(...section.rows.map((row) => row.seats.length))
   const sectionWidth = maxRow * 35 // 35px spacing between seats
-  const sectionHeight = section.rows.length * 35
   const labelX = sectionWidth / 2
   const labelY = -10 // Position above the section
 

@@ -72,7 +72,7 @@ export function AdjacentSeatFinder({ venue, onSelectGroup, maxSeats }: AdjacentS
           <div className="space-y-2">
             <div className="text-sm font-medium">Available Groups:</div>
             <div className="max-h-64 overflow-y-auto space-y-2">
-              {searchResults.map((group, index) => (
+              {searchResults.map((group, _index) => (
                 <div
                   key={`${group.sectionId}-${group.rowIndex}-${group.startCol}`}
                   className="p-3 border rounded-lg hover:bg-accent/50 transition-colors"

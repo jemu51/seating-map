@@ -10,6 +10,7 @@ import { SeatingMap } from "@/components/seating-map/seating-map"
 import { SeatSummaryPanel } from "@/components/seat-summary-panel"
 import { VenueInfoPanel } from "@/components/venue-info-panel"
 import { AdjacentSeatFinder } from "@/components/adjacent-seat-finder"
+import { VenueSelector, venueOptions } from "@/components/venue-selector"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { ConnectionStatus } from "@/components/connection-status"
 import { SkipLinks } from "@/components/accessibility/skip-links"
@@ -21,7 +22,7 @@ import { Switch } from "@/components/ui/switch"
 import { Label } from "@/components/ui/label"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { Loader2, MapPin, Music, Users, Calendar, Clock } from "lucide-react"
+import { Loader2, MapPin, Music, Users, Clock } from "lucide-react"
 import type { AdjacentSeatGroup } from "@/lib/seat-finder"
 
 export default function SeatingMapPage() {
@@ -32,6 +33,7 @@ export default function SeatingMapPage() {
   const [focusedSeat, setFocusedSeat] = useState<SelectedSeat | null>(null)
   const [activeTab, setActiveTab] = useState("selection")
   const [mobileDialogOpen, setMobileDialogOpen] = useState(false)
+  const [selectedVenueId, setSelectedVenueId] = useState("small")
 
   const {
     selection,
@@ -46,15 +48,19 @@ export default function SeatingMapPage() {
 
   const { getSeatStatus, isSeatAnimating, connectionStatus, updateCount } = useWebSocketUpdates(venue)
 
-  const { announcements, prefersReducedMotion, highContrast, announce, announceSelection, announceStatusChange } =
-    useAccessibility()
+  const { announcements, prefersReducedMotion, highContrast, announce, announceSelection } = useAccessibility()
 
   useEffect(() => {
     async function loadData() {
       try {
         setLoading(true)
+        setError(null)
         announce("Loading venue data")
-        const venueData = await loadVenueData()
+
+        const selectedOption = venueOptions.find((option) => option.id === selectedVenueId)
+        const venueFile = selectedOption?.file || "venue.json"
+
+        const venueData = await loadVenueData(venueFile)
         setVenue(venueData)
         announce(`Venue data loaded. ${venueData.name} with ${venueData.sections.length} sections.`)
       } catch (err) {
@@ -67,7 +73,7 @@ export default function SeatingMapPage() {
     }
 
     loadData()
-  }, [announce])
+  }, [announce, selectedVenueId])
 
   const handleSeatClick = (seat: SelectedSeat) => {
     const currentStatus = getSeatStatus(seat.id, seat.status)
@@ -100,6 +106,13 @@ export default function SeatingMapPage() {
     const count = selection.seats.length
     clearSelection()
     announce(`Cleared selection of ${count} seats`)
+  }
+
+  const handleVenueChange = (venueId: string) => {
+    setSelectedVenueId(venueId)
+    // Clear current selection when switching venues
+    clearSelection()
+    announce(`Switching to ${venueOptions.find((option) => option.id === venueId)?.name || "new venue"}`)
   }
 
   const selectedSeatIds = new Set(selection.seats.map((seat) => seat.id))
@@ -176,6 +189,7 @@ export default function SeatingMapPage() {
               </div>
             </div>
             <div className="hidden md:flex items-center gap-4">
+              <VenueSelector selectedVenue={selectedVenueId} onVenueChange={handleVenueChange} disabled={loading} />
               <ConnectionStatus status={connectionStatus} updateCount={updateCount} />
               <div className="flex items-center space-x-2">
                 <Switch
@@ -377,7 +391,12 @@ export default function SeatingMapPage() {
               {activeTab === "info" && "Event Information"}
             </DialogTitle>
           </DialogHeader>
-          <div className="py-4">
+          <div className="py-4 space-y-4">
+            {/* Venue selector for mobile */}
+            <div className="md:hidden">
+              <VenueSelector selectedVenue={selectedVenueId} onVenueChange={handleVenueChange} disabled={loading} />
+            </div>
+
             {activeTab === "selection" && (
               <SeatSummaryPanel
                 selection={selection}

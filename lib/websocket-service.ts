@@ -10,8 +10,8 @@ export interface SeatStatusUpdate {
 }
 
 export interface WebSocketMessage {
-  type: "seat_update" | "bulk_update" | "heartbeat" | "error" | "seat_selection"
-  data: SeatStatusUpdate | SeatStatusUpdate[] | string | { seatId: string; isSelected: boolean; clientId: string } | null
+  type: "seat_update" | "bulk_update" | "heartbeat" | "error" | "seat_selection" | "venue_changed" | "venue_switch_error" | "switch_venue"
+  data: SeatStatusUpdate | SeatStatusUpdate[] | string | { seatId: string; isSelected: boolean; clientId: string } | { venue: unknown; venueFile: string } | { error: string; currentVenue: string } | { venueFile: string } | null
 }
 
 class WebSocketService {
@@ -132,6 +132,14 @@ class WebSocketService {
       case "bulk_update":
         this.notifyListeners(message)
         break
+      case "venue_changed":
+        console.log("[WebSocket] Venue changed:", message.data)
+        this.notifyListeners(message)
+        break
+      case "venue_switch_error":
+        console.error("[WebSocket] Venue switch error:", message.data)
+        this.notifyListeners(message)
+        break
       case "error":
         console.error("[WebSocket] Server error:", message.data)
         this.notifyListeners(message)
@@ -235,6 +243,16 @@ class WebSocketService {
         seatId,
         isSelected,
         clientId: this.clientId
+      }
+    })
+  }
+
+  // Method to send venue switch requests
+  switchVenue(venueFile: string) {
+    this.send({
+      type: "switch_venue",
+      data: {
+        venueFile
       }
     })
   }

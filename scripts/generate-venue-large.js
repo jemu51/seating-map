@@ -168,8 +168,8 @@ function main() {
 
   const venue = generateVenue();
 
-  // Write to public/venue.json
-  const outputPath = path.join(__dirname, '..', 'public', 'venue.json');
+  // Write to public/venue_large.json
+  const outputPath = path.join(__dirname, '..', 'public', 'venue_large.json');
   fs.writeFileSync(outputPath, JSON.stringify(venue, null, 2));
 
   console.log(`Venue data written to ${outputPath}`);

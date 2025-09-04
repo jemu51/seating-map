@@ -4,7 +4,8 @@
   "private": true,
   "scripts": {
     "build": "next build",
-    "dev": "next dev",
+    "dev": "concurrently \"npm run websocket-server\" \"npm run dev\"",
+    "dev:offline": "next dev",
     "lint": "next lint",
     "start": "next start",
     "test": "jest",
@@ -14,9 +15,8 @@
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:headed": "playwright test --headed",
     "websocket-server": "node websocket-server.js",
-    "dev:full": "concurrently \"npm run websocket-server\" \"npm run dev\"",
-    "generate-venue": "node scripts/generate-venue.js",
-    "generate-venue-small": "node scripts/generate-venue-small.js"
+    "generate-venue-large": "node scripts/generate-venue-large.js",
+    "generate-venue-medium": "node scripts/generate-venue-medium.js"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",
