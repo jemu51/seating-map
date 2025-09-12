@@ -10,7 +10,7 @@ export interface ViewportBounds {
   height: number
 }
 
-export function useVisibleSeats(venue: Venue | null, viewBox: string, scale: number) {
+export function useVisibleSeats(venue: Venue | null, viewBox: string, _scale: number) {
   return useMemo(() => {
     if (!venue) return { visibleSeats: [], totalSeats: 0 }
 
@@ -66,7 +66,7 @@ export function useVisibleSeats(venue: Venue | null, viewBox: string, scale: num
     }
 
     return { visibleSeats, totalSeats }
-  }, [venue, viewBox, scale])
+  }, [venue, viewBox])
 }
 
 export function useSeatClustering(
@@ -104,7 +104,7 @@ export function useSeatClustering(
 
         const distance = Math.sqrt(
           Math.pow(seatData.absoluteX - otherSeatData.absoluteX, 2) +
-            Math.pow(seatData.absoluteY - otherSeatData.absoluteY, 2),
+          Math.pow(seatData.absoluteY - otherSeatData.absoluteY, 2),
         )
 
         if (distance <= clusterDistance) {

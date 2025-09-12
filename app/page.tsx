@@ -22,7 +22,7 @@ import { Switch } from "@/components/ui/switch"
 import { Label } from "@/components/ui/label"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { Loader2, MapPin, Music, Users, Clock } from "lucide-react"
+import { Loader2, MapPin } from "lucide-react"
 import type { AdjacentSeatGroup } from "@/lib/seat-finder"
 
 export default function SeatingMapPage() {
@@ -34,7 +34,6 @@ export default function SeatingMapPage() {
   const [activeTab, setActiveTab] = useState("selection")
   const [mobileDialogOpen, setMobileDialogOpen] = useState(false)
   const [selectedVenueId, setSelectedVenueId] = useState("small")
-  const [venueSelectorOpen, setVenueSelectorOpen] = useState(false)
 
   const {
     selection,
